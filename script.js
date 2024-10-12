@@ -8,9 +8,20 @@ let erasing = false;
 let currentTool = 'draw';
 let currentColor = '#000000';
 let currentSize = 2;
+let images = [];
+let selectedImage = null;
 
 // Event listeners for mouse actions
 canvas.addEventListener('mousedown', (e) => {
+    if (selectedImage) {
+        // Check if clicked on image
+        const { x, y, width, height } = selectedImage;
+        if (e.offsetX >= x && e.offsetX <= x + width && e.offsetY >= y && e.offsetY <= y + height) {
+            selectedImage.isDragging = true;
+            return;
+        }
+    }
+
     drawing = true;
     ctx.beginPath();
     ctx.moveTo(e.offsetX, e.offsetY);
@@ -24,11 +35,21 @@ canvas.addEventListener('mousemove', (e) => {
         ctx.globalAlpha = currentTool === 'highlighter' ? 0.5 : 1; // Set transparency for highlighter
         ctx.stroke();
     }
+
+    // If an image is selected and dragging, update its position
+    if (selectedImage && selectedImage.isDragging) {
+        selectedImage.x = e.offsetX - selectedImage.width / 2;
+        selectedImage.y = e.offsetY - selectedImage.height / 2;
+        redrawCanvas();
+    }
 });
 
 canvas.addEventListener('mouseup', () => {
     drawing = false;
     ctx.closePath();
+    if (selectedImage) {
+        selectedImage.isDragging = false;
+    }
 });
 
 canvas.addEventListener('mouseout', () => {
@@ -57,6 +78,7 @@ document.getElementById('erase').addEventListener('click', () => {
 
 document.getElementById('clear').addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    images = []; // Clear images
 });
 
 document.getElementById('colorPicker').addEventListener('input', (e) => {
@@ -81,9 +103,9 @@ document.getElementById('fill').addEventListener('click', () => {
     const x = Math.floor(canvas.width / 2);
     const y = Math.floor(canvas.height / 2);
     const targetColor = [data[(y * canvas.width + x) * 4], data[(y * canvas.width + x) * 4 + 1], data[(y * canvas.width + x) * 4 + 2]];
-    
+
     if (JSON.stringify(targetColor) === JSON.stringify([0, 0, 0, 0])) return; // Do not fill if clicked on non-fillable area
-    
+
     stack.push([x, y]);
 
     while (stack.length) {
@@ -120,20 +142,16 @@ document.addEventListener('paste', (e) => {
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    let imgWidth = img.width / 4;
-                    let imgHeight = img.height / 4; // Default size
-                    let startX = 50;
-                    let startY = 50;
-
-                    // Prompt for size adjustment
-                    const newSize = prompt(`Enter size (width, height) for image: (${imgWidth}, ${imgHeight})`, `${imgWidth},${imgHeight}`);
-                    if (newSize) {
-                        const sizes = newSize.split(',');
-                        imgWidth = parseInt(sizes[0]) || imgWidth;
-                        imgHeight = parseInt(sizes[1]) || imgHeight;
-                    }
-
-                    ctx.drawImage(img, startX, startY, imgWidth, imgHeight);
+                    const imgObject = {
+                        image: img,
+                        x: 50,
+                        y: 50,
+                        width: img.width / 4,
+                        height: img.height / 4,
+                        isDragging: false,
+                    };
+                    images.push(imgObject);
+                    redrawCanvas();
                 };
                 img.src = event.target.result;
             };
@@ -141,3 +159,11 @@ document.addEventListener('paste', (e) => {
         }
     }
 });
+
+// Redraw all images on the canvas
+function redrawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    images.forEach(img => {
+        ctx.drawImage(img.image, img.x, img.y, img.width, img.height);
+    });
+}
