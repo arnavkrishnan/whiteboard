@@ -1,0 +1,16 @@
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.toolbar {
+    margin: 20px;
+}
+
+canvas {
+    border: 1px solid #ccc;
+    background-color: white;
+    cursor: crosshair;
+}
