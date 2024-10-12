@@ -14,3 +14,9 @@ canvas {
     background-color: white;
     cursor: crosshair;
 }
+
+.image {
+    border: 1px dashed #ccc;
+    position: absolute;
+    cursor: nwse-resize;
+}
