@@ -8,14 +8,14 @@
 </head>
 <body>
     <div class="toolbar">
-        <button id="draw">Marker</button>
-        <button id="highlighter">Highlighter</button>
-        <button id="erase">Eraser</button>
-        <button id="clear">Clear</button>
-        <input type="color" id="colorPicker" value="#000000">
+        <button id="draw" title="Draw with marker">Marker</button>
+        <button id="highlighter" title="Draw with highlighter">Highlighter</button>
+        <button id="erase" title="Erase drawing">Eraser</button>
+        <button id="clear" title="Clear the canvas">Clear</button>
+        <input type="color" id="colorPicker" value="#000000" title="Choose color">
         <label for="sizePicker">Size:</label>
-        <input type="range" id="sizePicker" min="1" max="50" value="2">
-        <button id="fill">Fill</button>
+        <input type="range" id="sizePicker" min="1" max="50" value="2" title="Adjust size">
+        <button id="fill" title="Fill area with color">Fill</button>
     </div>
     <canvas id="whiteboard"></canvas>
     <script src="script.js"></script>
