@@ -12,11 +12,15 @@ body {
 canvas {
     border: 1px solid #ccc;
     background-color: white;
-    cursor: crosshair;
+    cursor: crosshair; /* Default cursor */
 }
 
 .image {
     border: 1px dashed #ccc;
     position: absolute;
     cursor: nwse-resize;
+}
+
+.toolbar button {
+    margin-right: 5px; /* Add some space between buttons */
 }
