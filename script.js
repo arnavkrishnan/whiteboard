@@ -62,18 +62,22 @@ document.getElementById('draw').addEventListener('click', () => {
     erasing = false;
     currentTool = 'draw';
     ctx.globalAlpha = 1; // Reset alpha for marker
+    canvas.style.cursor = 'crosshair';
 });
 
 document.getElementById('highlighter').addEventListener('click', () => {
     erasing = false;
     currentTool = 'highlighter';
+    ctx.globalAlpha = 0.5; // Set transparency for highlighter
+    canvas.style.cursor = 'url("highlighter_cursor.png"), auto'; // Change cursor to highlighter cursor
 });
 
 document.getElementById('erase').addEventListener('click', () => {
     erasing = true;
     currentTool = 'erase';
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = currentSize;
+    ctx.strokeStyle = 'white'; // Set eraser color to white
+    ctx.lineWidth = currentSize; // Set line width for eraser
+    canvas.style.cursor = 'url("eraser_cursor.png"), auto'; // Change cursor to eraser cursor
 });
 
 document.getElementById('clear').addEventListener('click', () => {
@@ -92,44 +96,52 @@ document.getElementById('sizePicker').addEventListener('input', (e) => {
     currentSize = e.target.value;
 });
 
-// Fill tool
+// Fill tool implementation
 document.getElementById('fill').addEventListener('click', () => {
     const fillColor = currentColor;
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
 
-    // Simple flood fill algorithm
-    const stack = [];
-    const x = Math.floor(canvas.width / 2);
-    const y = Math.floor(canvas.height / 2);
-    const targetColor = [data[(y * canvas.width + x) * 4], data[(y * canvas.width + x) * 4 + 1], data[(y * canvas.width + x) * 4 + 2]];
+    // Get fill click position
+    canvas.addEventListener('click', (e) => {
+        const x = e.offsetX;
+        const y = e.offsetY;
+        const targetColor = [
+            data[(y * canvas.width + x) * 4],
+            data[(y * canvas.width + x) * 4 + 1],
+            data[(y * canvas.width + x) * 4 + 2],
+        ];
 
-    if (JSON.stringify(targetColor) === JSON.stringify([0, 0, 0, 0])) return; // Do not fill if clicked on non-fillable area
+        if (JSON.stringify(targetColor) === JSON.stringify([255, 255, 255, 255])) return; // Prevent fill on empty areas
 
-    stack.push([x, y]);
+        const stack = [[x, y]];
 
-    while (stack.length) {
-        const [nx, ny] = stack.pop();
-        const index = (ny * canvas.width + nx) * 4;
+        while (stack.length) {
+            const [nx, ny] = stack.pop();
+            const index = (ny * canvas.width + nx) * 4;
 
-        // Check boundaries and color
-        if (nx < 0 || nx >= canvas.width || ny < 0 || ny >= canvas.height || JSON.stringify(data.slice(index, index + 3)) !== JSON.stringify(targetColor)) {
-            continue;
+            // Check boundaries and if it matches target color
+            if (nx < 0 || nx >= canvas.width || ny < 0 || ny >= canvas.height ||
+                data[index] !== targetColor[0] || data[index + 1] !== targetColor[1] || data[index + 2] !== targetColor[2]) {
+                continue;
+            }
+
+            // Change the pixel color
+            data[index] = parseInt(fillColor.slice(1, 3), 16);
+            data[index + 1] = parseInt(fillColor.slice(3, 5), 16);
+            data[index + 2] = parseInt(fillColor.slice(5, 7), 16);
+            data[index + 3] = 255; // Set full opacity
+
+            stack.push([nx + 1, ny]);
+            stack.push([nx - 1, ny]);
+            stack.push([nx, ny + 1]);
+            stack.push([nx, ny - 1]);
         }
 
-        // Change color
-        data[index] = parseInt(fillColor.slice(1, 3), 16);
-        data[index + 1] = parseInt(fillColor.slice(3, 5), 16);
-        data[index + 2] = parseInt(fillColor.slice(5, 7), 16);
-        data[index + 3] = 255; // Alpha
+        ctx.putImageData(imageData, 0, 0);
+    });
 
-        stack.push([nx + 1, ny]);
-        stack.push([nx - 1, ny]);
-        stack.push([nx, ny + 1]);
-        stack.push([nx, ny - 1]);
-    }
-
-    ctx.putImageData(imageData, 0, 0);
+    canvas.style.cursor = 'url("fill_bucket_cursor.png"), auto'; // Change cursor to fill bucket cursor
 });
 
 // Allow image pasting
@@ -167,3 +179,10 @@ function redrawCanvas() {
         ctx.drawImage(img.image, img.x, img.y, img.width, img.height);
     });
 }
+
+// Resize event to adjust canvas
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth - 40;
+    canvas.height = window.innerHeight - 100;
+    redrawCanvas(); // Redraw images after resizing
+});
